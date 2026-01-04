@@ -22,6 +22,7 @@ function App() {
             <Route path="/video/:id" element={<VideoDetails />} />
             <Route path="/search/:searchTerm" element={<SearchFeed />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/history" element={<History />} />
