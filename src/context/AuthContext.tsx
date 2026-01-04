@@ -26,15 +26,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setCurrentUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // 1. Check active session immediately
+    const initAuth = async () => {
+      // Check if we have a session in local storage or URL
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Error getting session:", error);
+      }
 
+      if (session) {
+        console.log("Session found on init:", session.user.email);
+        setSession(session);
+        setCurrentUser(session.user);
+        setLoading(false);
+      } else {
+        // 2. If no session, check if we just came back from a redirect (URL has fragments)
+        // Sometimes getSession() misses the hash on first load in some environments
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token')) {
+            console.log("Hash found, waiting for onAuthStateChange to catch it...");
+            // Do NOT set loading to false yet, let the listener handle it
+        } else {
+            setLoading(false);
+        }
+      }
+    };
+
+    initAuth();
+
+    // 3. Listen for changes (Login, Logout, Auto-refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session); // Debugging
+      console.log('Auth state changed:', _event, session?.user?.email); 
       setSession(session);
       setCurrentUser(session?.user ?? null);
       setLoading(false);
