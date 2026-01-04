@@ -44,23 +44,23 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
         <div className="flex-shrink-0">
              {/* We don't have channel avatar in video response usually, so using a placeholder or we'd need another API call. 
                  For list views, usually we don't fetch channel avatar for every video to save quota. */}
-            <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center">
-                 <RxAvatar size={24} />
+            <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center transition-colors">
+                 <RxAvatar size={24} className="text-black dark:text-white" />
             </div>
         </div>
         
         <div className="flex flex-col">
           <Link to={`/video/${videoId}`}>
-            <h3 className="text-white text-sm font-bold line-clamp-2 leading-tight">
+            <h3 className="text-black dark:text-white text-sm font-bold line-clamp-2 leading-tight transition-colors">
               {title}
             </h3>
           </Link>
           
-          <Link to={`/channel/${channelId}`} className="text-[#AAAAAA] text-xs mt-1 hover:text-white">
+          <Link to={`/channel/${channelId}`} className="text-gray-600 dark:text-[#AAAAAA] text-xs mt-1 hover:text-black dark:hover:text-white transition-colors">
             {channelTitle}
           </Link>
           
-          <div className="flex items-center text-[#AAAAAA] text-xs">
+          <div className="flex items-center text-gray-600 dark:text-[#AAAAAA] text-xs transition-colors">
             <span>
               {statistics?.viewCount ? numeral(statistics.viewCount).format('0.0a').toUpperCase() : '0'} views
             </span>

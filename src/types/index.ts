@@ -33,6 +33,20 @@ export interface Video {
   id: string;
   snippet: Snippet;
   statistics?: VideoStatistics;
+  videoUrl?: string;
+  isLocal?: boolean;
+}
+
+export interface Comment {
+  id: string;
+  created_at: string;
+  content: string;
+  user_id: string;
+  user_name: string;
+  user_avatar: string;
+  video_id: string;
+  parent_id?: string | null;
+  replies?: Comment[]; // For UI nesting
 }
 
 export interface SearchResult {
@@ -79,5 +93,30 @@ export interface SearchResponse {
   pageInfo: {
     totalResults: number;
     resultsPerPage: number;
+  };
+}
+
+export interface Playlist {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  is_system: boolean;
+  created_at: string;
+  item_count?: number; // Optional count from join
+  thumbnail_url?: string; // Optional thumbnail from first item
+}
+
+export interface PlaylistItem {
+  id: string;
+  playlist_id: string;
+  video_id: string;
+  video_source: 'local' | 'youtube';
+  added_at: string;
+  metadata: {
+    title: string;
+    thumbnail_url: string;
+    channel_title: string;
+    duration?: string;
   };
 }

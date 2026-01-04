@@ -42,7 +42,7 @@ export const fetchVideosByCategory = async (categoryId: string, pageToken: strin
     return response.data;
   };
 
-export const searchVideos = async (query: string, pageToken: string = '') => {
+export const searchVideos = async (query: string, pageToken: string = '', order: string = 'relevance') => {
   const response = await api.get('/search', {
     params: {
       part: 'snippet',
@@ -50,6 +50,7 @@ export const searchVideos = async (query: string, pageToken: string = '') => {
       maxResults: 20,
       pageToken,
       type: 'video',
+      order,
     },
   });
   return response.data;
