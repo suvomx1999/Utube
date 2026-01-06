@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, refreshSession } = useAuth();
   const checkCount = useRef(0);
 
   useEffect(() => {
@@ -20,33 +20,35 @@ const AuthCallback = () => {
     const handleAuthCallback = async () => {
       try {
         console.log("AuthCallback: Checking session...");
-        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) throw error;
+        // 1. Force a session refresh first to ensure Context is up to date
+        const session = await refreshSession();
         
         if (session) {
-          console.log("AuthCallback: Session found via getSession:", session.user.email);
-          // We found a session, but we wait for currentUser to update in the other useEffect
-          // Just in case it doesn't update quickly, we force a reload/check after a delay
-          setTimeout(() => {
-             if (!currentUser) {
-                 console.warn("AuthCallback: Session exists but Context not updated. Force redirecting...");
-                 navigate('/', { replace: true });
-             }
-          }, 2000);
+          console.log("AuthCallback: Session confirmed via refreshSession:", session.user.email);
+          // Wait for the context to reflect this change (handled by first useEffect)
         } else {
-            // Fallback: Check hash manually
+            // Fallback: Check hash manually if getSession/refreshSession fails
             const hash = window.location.hash;
             if (hash && hash.includes('access_token')) {
                 console.log("AuthCallback: Hash found, waiting for Supabase processing...");
-                // Supabase client should pick this up automatically.
-                // We'll give it a moment.
-                setTimeout(() => {
-                    navigate('/', { replace: true });
-                }, 2000);
+                
+                // Set a timeout to try refreshing again
+                setTimeout(async () => {
+                    console.log("AuthCallback: Retrying refresh...");
+                    await refreshSession();
+                }, 1000);
+                
+                setTimeout(async () => {
+                     // Final attempt before redirect
+                     const finalSession = await refreshSession();
+                     if (!finalSession) {
+                         navigate('/', { replace: true });
+                     }
+                }, 3000);
+
             } else {
                 console.log("AuthCallback: No session and no hash. Redirecting to login.");
-                // Give it a grace period just in case
                 setTimeout(() => navigate('/login', { replace: true }), 1000);
             }
         }
@@ -59,7 +61,7 @@ const AuthCallback = () => {
     if (!currentUser) {
         handleAuthCallback();
     }
-  }, [navigate, currentUser]);
+  }, [navigate, currentUser, refreshSession]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#0f0f0f]">

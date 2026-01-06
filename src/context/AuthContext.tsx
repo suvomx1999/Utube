@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
+  refreshSession: () => Promise<Session | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,12 +91,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshSession = async () => {
+    try {
+        console.log("AuthContext: Manual refresh requested");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (session) {
+            console.log("AuthContext: Session found on refresh:", session.user.email);
+            setSession(session);
+            setCurrentUser(session.user);
+        } else {
+            console.log("AuthContext: No session found on refresh");
+        }
+        return session;
+    } catch (error) {
+        console.error("AuthContext: Error refreshing session", error);
+        return null;
+    }
+  };
+
   const value = {
     currentUser,
     session,
     loading,
     signInWithGoogle,
-    logout
+    logout,
+    refreshSession
   };
 
   return (
