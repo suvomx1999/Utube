@@ -4,6 +4,7 @@ import Feed from './pages/Feed';
 import VideoDetails from './pages/VideoDetails';
 import SearchFeed from './pages/SearchFeed';
 import Login from './pages/Login';
+import AuthCallback from './pages/AuthCallback';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
 import History from './pages/History';
