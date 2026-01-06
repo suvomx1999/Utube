@@ -1,42 +1,65 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const checkCount = useRef(0);
 
   useEffect(() => {
-    // Handle the OAuth callback
+    // If we are already logged in according to context, go home
+    if (currentUser) {
+        console.log("AuthCallback: CurrentUser detected, redirecting to home.");
+        navigate('/', { replace: true });
+    }
+  }, [currentUser, navigate]);
+
+  useEffect(() => {
     const handleAuthCallback = async () => {
       try {
+        console.log("AuthCallback: Checking session...");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) throw error;
         
         if (session) {
-          console.log("Session successfully established:", session.user.email);
-          // Small delay to ensure state propagates
-          setTimeout(() => navigate('/', { replace: true }), 100);
+          console.log("AuthCallback: Session found via getSession:", session.user.email);
+          // We found a session, but we wait for currentUser to update in the other useEffect
+          // Just in case it doesn't update quickly, we force a reload/check after a delay
+          setTimeout(() => {
+             if (!currentUser) {
+                 console.warn("AuthCallback: Session exists but Context not updated. Force redirecting...");
+                 navigate('/', { replace: true });
+             }
+          }, 2000);
         } else {
-            // Fallback: Check hash manually if getSession fails immediately
+            // Fallback: Check hash manually
             const hash = window.location.hash;
             if (hash && hash.includes('access_token')) {
-                console.log("Hash found in callback, waiting for Supabase...");
-                // Just wait, the onAuthStateChange in AuthContext will likely pick it up
-                // redirecting too early here might break it
-                setTimeout(() => navigate('/', { replace: true }), 2000);
+                console.log("AuthCallback: Hash found, waiting for Supabase processing...");
+                // Supabase client should pick this up automatically.
+                // We'll give it a moment.
+                setTimeout(() => {
+                    navigate('/', { replace: true });
+                }, 2000);
             } else {
-                 navigate('/login', { replace: true });
+                console.log("AuthCallback: No session and no hash. Redirecting to login.");
+                // Give it a grace period just in case
+                setTimeout(() => navigate('/login', { replace: true }), 1000);
             }
         }
       } catch (error) {
-        console.error('Error during auth callback:', error);
+        console.error('AuthCallback Error:', error);
         navigate('/login', { replace: true });
       }
     };
 
-    handleAuthCallback();
-  }, [navigate]);
+    if (!currentUser) {
+        handleAuthCallback();
+    }
+  }, [navigate, currentUser]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-[#0f0f0f]">
